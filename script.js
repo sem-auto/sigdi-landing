@@ -68,46 +68,213 @@ document.addEventListener('DOMContentLoaded', function () {
      ========================================================= */
   var clockDemo = document.getElementById('demo-fichajes');
   if (clockDemo) {
-    var workers = ['Marta G.', 'Javier R.', 'Ana P.'];
-    var selectedWorker = workers[0];
+    var initialWorkerStates = {
+      marta: { nombre: 'Marta G.', iniciales: 'MG', estado: 'fuera' },
+      javier: { nombre: 'Javier R.', iniciales: 'JR', estado: 'trabajando' },
+      ana: { nombre: 'Ana P.', iniciales: 'AP', estado: 'pausa' }
+    };
+    var workers = JSON.parse(JSON.stringify(initialWorkerStates));
+    var selectedWorkerId = '';
+    var pinValue = '';
     var records = [];
 
-    var workerButtons = clockDemo.querySelectorAll('.demo-worker-btn');
+    var workerButtons = clockDemo.querySelectorAll('[data-worker]');
+    var demoSteps = clockDemo.querySelectorAll('[data-demo-step]');
+    var progressBars = clockDemo.querySelectorAll('.demo-progress span');
     var msg = clockDemo.querySelector('.demo-message');
     var tableBody = clockDemo.querySelector('tbody');
-    var btnIn = clockDemo.querySelector('[data-action="entrada"]');
-    var btnOut = clockDemo.querySelector('[data-action="salida"]');
+    var selectedAvatar = clockDemo.querySelector('.demo-selected-worker .demo-avatar');
+    var selectedName = clockDemo.querySelector('.demo-selected-worker strong');
+    var pinDots = clockDemo.querySelectorAll('.demo-pin-dots span');
+    var pinError = clockDemo.querySelector('.demo-pin-error');
+    var confirmPinButton = clockDemo.querySelector('[data-pin-confirm]');
+    var greeting = clockDemo.querySelector('[data-demo-greeting]');
+    var stateText = clockDemo.querySelector('[data-demo-state]');
+    var actionContainer = clockDemo.querySelector('[data-demo-actions]');
+
+    var statusLabels = { fuera: 'Fuera', trabajando: 'Trabajando', pausa: 'En pausa' };
+    var stepIndexes = { workers: 0, pin: 1, actions: 2 };
+
+    function setStep(stepName) {
+      demoSteps.forEach(function (step) {
+        step.hidden = step.getAttribute('data-demo-step') !== stepName;
+      });
+      var activeIndex = stepIndexes[stepName];
+      progressBars.forEach(function (bar, index) {
+        bar.classList.toggle('active', index <= activeIndex);
+      });
+    }
+
+    function renderWorkers() {
+      Object.keys(workers).forEach(function (id) {
+        var status = clockDemo.querySelector('[data-status-for="' + id + '"]');
+        status.textContent = statusLabels[workers[id].estado];
+        status.className = 'demo-status status-' + workers[id].estado;
+      });
+    }
+
+    function updatePin() {
+      pinDots.forEach(function (dot, index) {
+        dot.classList.toggle('filled', index < pinValue.length);
+      });
+      confirmPinButton.disabled = pinValue.length !== 4;
+    }
 
     workerButtons.forEach(function (btn) {
       btn.addEventListener('click', function () {
-        workerButtons.forEach(function (b) { b.classList.remove('selected'); });
-        btn.classList.add('selected');
-        selectedWorker = btn.textContent.trim();
+        selectedWorkerId = btn.getAttribute('data-worker');
+        var worker = workers[selectedWorkerId];
+        selectedAvatar.textContent = worker.iniciales;
+        selectedName.textContent = worker.nombre;
+        pinValue = '';
+        pinError.textContent = '';
+        msg.textContent = '';
+        updatePin();
+        setStep('pin');
       });
+    });
+
+    clockDemo.querySelectorAll('[data-demo-back]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        selectedWorkerId = '';
+        pinValue = '';
+        pinError.textContent = '';
+        msg.textContent = '';
+        updatePin();
+        setStep('workers');
+      });
+    });
+
+    clockDemo.querySelectorAll('[data-pin-key]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (pinValue.length < 4) pinValue += btn.getAttribute('data-pin-key');
+        pinError.textContent = '';
+        updatePin();
+      });
+    });
+
+    clockDemo.querySelector('[data-pin-delete]').addEventListener('click', function () {
+      pinValue = pinValue.slice(0, -1);
+      pinError.textContent = '';
+      updatePin();
+    });
+
+    confirmPinButton.addEventListener('click', function () {
+      if (pinValue !== '1234') {
+        pinError.textContent = 'PIN incorrecto. Para esta demostración utiliza 1234.';
+        pinValue = '';
+        updatePin();
+        return;
+      }
+      pinError.textContent = '';
+      renderActions();
+      setStep('actions');
     });
 
     function nowLabel() {
       var d = new Date();
-      return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+      return d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0') + ':' + d.getSeconds().toString().padStart(2, '0');
     }
 
-    function addRecord(tipo) {
-      records.unshift({ trabajador: selectedWorker, tipo: tipo, hora: nowLabel() });
+    function renderActions() {
+      var worker = workers[selectedWorkerId];
+      greeting.textContent = 'Hola, ' + worker.nombre.split(' ')[0];
+      actionContainer.innerHTML = '';
+
+      var actions = [];
+      if (worker.estado === 'fuera') {
+        stateText.textContent = 'Puedes registrar tu entrada.';
+        actions = [{ evento: 'entrada', titulo: 'Fichar entrada', ayuda: 'Empiezo a trabajar', clase: 'action-entry' }];
+      } else if (worker.estado === 'trabajando') {
+        stateText.textContent = 'Estás trabajando. ¿Qué quieres fichar?';
+        actions = [
+          { evento: 'pausa', titulo: 'Pausar', ayuda: 'Empiezo el descanso', clase: 'action-pause' },
+          { evento: 'salida', titulo: 'Fichar salida', ayuda: 'Termino de trabajar', clase: 'action-exit' }
+        ];
+      } else {
+        stateText.textContent = 'Estás en pausa.';
+        actions = [
+          { evento: 'reanudar', titulo: 'Terminar pausa', ayuda: 'Vuelvo del descanso', clase: 'action-resume' },
+          { evento: 'salida', titulo: 'Fichar salida', ayuda: 'Termino de trabajar', clase: 'action-exit' }
+        ];
+      }
+
+      actions.forEach(function (action) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'demo-action-card ' + action.clase;
+        button.setAttribute('data-demo-event', action.evento);
+        var title = document.createElement('strong');
+        title.textContent = action.titulo;
+        var help = document.createElement('span');
+        help.textContent = action.ayuda;
+        button.appendChild(title);
+        button.appendChild(help);
+        actionContainer.appendChild(button);
+      });
+    }
+
+    function addRecord(evento) {
+      var worker = workers[selectedWorkerId];
+      var eventLabels = { entrada: 'Entrada', pausa: 'Pausa iniciada', reanudar: 'Pausa terminada', salida: 'Salida' };
+      var nextStates = { entrada: 'trabajando', pausa: 'pausa', reanudar: 'trabajando', salida: 'fuera' };
+      var time = nowLabel();
+      worker.estado = nextStates[evento];
+      records.unshift({ trabajador: worker.nombre, tipo: eventLabels[evento], hora: time });
       renderTable();
-      msg.textContent = selectedWorker + ' ha fichado ' + tipo + ' a las ' + nowLabel() + '.';
+      renderWorkers();
+      msg.textContent = worker.nombre + ': ' + eventLabels[evento] + ' guardada a las ' + time + '.';
+      selectedWorkerId = '';
+      pinValue = '';
+      updatePin();
+      setStep('workers');
     }
 
     function renderTable() {
       tableBody.innerHTML = '';
+      if (!records.length) {
+        var emptyRow = document.createElement('tr');
+        emptyRow.className = 'demo-empty';
+        var emptyCell = document.createElement('td');
+        emptyCell.colSpan = 3;
+        emptyCell.textContent = 'Todavía no has realizado ningún fichaje.';
+        emptyRow.appendChild(emptyCell);
+        tableBody.appendChild(emptyRow);
+        return;
+      }
       records.slice(0, 6).forEach(function (r) {
         var tr = document.createElement('tr');
-        tr.innerHTML = '<td>' + r.trabajador + '</td><td>' + r.tipo + '</td><td>' + r.hora + '</td>';
+        [r.trabajador, r.tipo, r.hora].forEach(function (value) {
+          var td = document.createElement('td');
+          td.textContent = value;
+          tr.appendChild(td);
+        });
         tableBody.appendChild(tr);
       });
     }
 
-    if (btnIn) btnIn.addEventListener('click', function () { addRecord('entrada'); });
-    if (btnOut) btnOut.addEventListener('click', function () { addRecord('salida'); });
+    actionContainer.addEventListener('click', function (event) {
+      var button = event.target.closest('[data-demo-event]');
+      if (button) addRecord(button.getAttribute('data-demo-event'));
+    });
+
+    clockDemo.querySelector('[data-demo-reset]').addEventListener('click', function () {
+      workers = JSON.parse(JSON.stringify(initialWorkerStates));
+      selectedWorkerId = '';
+      pinValue = '';
+      records = [];
+      msg.textContent = '';
+      pinError.textContent = '';
+      renderWorkers();
+      renderTable();
+      updatePin();
+      setStep('workers');
+    });
+
+    renderWorkers();
+    renderTable();
+    updatePin();
+    setStep('workers');
   }
 
   /* =========================================================

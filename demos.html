@@ -93,24 +93,72 @@
         <h2>Demostración rápida de fichajes</h2>
         <p>Simulación en esta misma página, sin salir de la web.</p>
       </div>
-      <div class="demo-shell" style="max-width:560px;margin:0 auto;">
+      <div class="demo-shell demo-timeclock" style="max-width:760px;margin:0 auto;">
+        <div class="demo-kiosk-head">
+          <div><strong>SIDGI Fichajes</strong><span>Empresa Demo SL</span></div>
+          <span class="demo-device-ok">● Dispositivo autorizado</span>
+        </div>
+        <div class="demo-progress" aria-label="Progreso de la demostración"><span class="active"></span><span></span><span></span></div>
         <span class="demo-flag">Demostración con datos ficticios</span>
-        <p style="font-size:0.9rem;">Elige un trabajador y prueba a fichar entrada o salida.</p>
-        <div class="demo-worker-select">
-          <button type="button" class="demo-worker-btn selected">Marta G.</button>
-          <button type="button" class="demo-worker-btn">Javier R.</button>
-          <button type="button" class="demo-worker-btn">Ana P.</button>
+        <p class="demo-message" role="status" aria-live="polite"></p>
+
+        <div data-demo-step="workers">
+          <div class="demo-step-head">
+            <span>Paso 1 de 3</span>
+            <h3>¿Quién eres?</h3>
+            <p>Selecciona un trabajador para continuar.</p>
+          </div>
+          <div class="demo-worker-grid">
+            <button type="button" class="demo-worker-card" data-worker="marta">
+              <span class="demo-avatar">MG</span><strong>Marta G.</strong><span class="demo-status" data-status-for="marta"></span>
+            </button>
+            <button type="button" class="demo-worker-card" data-worker="javier">
+              <span class="demo-avatar">JR</span><strong>Javier R.</strong><span class="demo-status" data-status-for="javier"></span>
+            </button>
+            <button type="button" class="demo-worker-card" data-worker="ana">
+              <span class="demo-avatar">AP</span><strong>Ana P.</strong><span class="demo-status" data-status-for="ana"></span>
+            </button>
+          </div>
         </div>
-        <div class="demo-clock-actions">
-          <button type="button" class="btn btn-primary" data-action="entrada">Entrada</button>
-          <button type="button" class="btn btn-ghost" data-action="salida">Salida</button>
+
+        <div data-demo-step="pin" hidden>
+          <button type="button" class="demo-back" data-demo-back>← Cambiar trabajador</button>
+          <div class="demo-step-head">
+            <span>Paso 2 de 3</span>
+            <h3>Confirma tu identidad</h3>
+            <p>Introduce el PIN de demostración: <strong>1234</strong></p>
+          </div>
+          <div class="demo-selected-worker"><span class="demo-avatar"></span><strong></strong></div>
+          <div class="demo-pin-dots" aria-label="PIN introducido"><span></span><span></span><span></span><span></span></div>
+          <div class="demo-keypad" aria-label="Teclado numérico">
+            <button type="button" data-pin-key="1">1</button><button type="button" data-pin-key="2">2</button><button type="button" data-pin-key="3">3</button>
+            <button type="button" data-pin-key="4">4</button><button type="button" data-pin-key="5">5</button><button type="button" data-pin-key="6">6</button>
+            <button type="button" data-pin-key="7">7</button><button type="button" data-pin-key="8">8</button><button type="button" data-pin-key="9">9</button>
+            <button type="button" class="demo-key-delete" data-pin-delete>Borrar</button><button type="button" data-pin-key="0">0</button><button type="button" class="demo-key-confirm" data-pin-confirm disabled>Confirmar</button>
+          </div>
+          <p class="demo-pin-error" role="alert"></p>
         </div>
-        <p class="demo-message"></p>
-        <table class="demo-table">
-          <thead><tr><th>Trabajador</th><th>Tipo</th><th>Hora</th></tr></thead>
-          <tbody></tbody>
-        </table>
-        <p style="font-size:0.82rem;margin-top:14px;margin-bottom:0;">Los datos se reinician al recargar la página. No se guarda ninguna información.</p>
+
+        <div data-demo-step="actions" hidden>
+          <button type="button" class="demo-back" data-demo-back>← Cambiar trabajador</button>
+          <div class="demo-step-head">
+            <span>Paso 3 de 3</span>
+            <h3 data-demo-greeting></h3>
+            <p data-demo-state></p>
+          </div>
+          <div class="demo-action-grid" data-demo-actions></div>
+        </div>
+
+        <div class="demo-recent">
+          <div class="demo-recent-head"><h4>Fichajes realizados en esta demostración</h4><button type="button" data-demo-reset>Reiniciar</button></div>
+          <div class="demo-table-wrap">
+            <table class="demo-table">
+              <thead><tr><th>Trabajador</th><th>Evento</th><th>Hora</th></tr></thead>
+              <tbody><tr class="demo-empty"><td colspan="3">Todavía no has realizado ningún fichaje.</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="demo-privacy-note">La simulación funciona únicamente en tu navegador. Se reinicia al recargar y no guarda ninguna información.</p>
       </div>
     </div>
   </section>
